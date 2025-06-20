@@ -25,62 +25,59 @@
     filter: blur(8px) brightness(1.1);
     z-index: -1;
   }
-  .page { display: none; text-align: center; }
-  .page.active { display: block; }
+  .page { display:none; text-align:center; }
+  .page.active { display:block; }
   .camera-area {
-    width: 300px; height: 300px;
-    background: white; border-radius: 20px;
-    margin: 1rem auto; position: relative;
-    overflow: hidden;
+    width:300px; height:300px;
+    background:white; border-radius:20px;
+    margin:1rem auto; position:relative;
+    overflow:hidden;
   }
-  #video { width: 100%; height: 100%; object-fit: cover; }
-  #analyzing { position: absolute; bottom: 10px; left: 0; right: 0; color: #fff; background: rgba(0,0,0,0.5); }
-  #scan-animation {
-    position: absolute; top:0; left:0; right:0; bottom:0;
-    background: rgba(0,255,0,0.2);
-    animation: scan 2s infinite;
+  #video, #capture-canvas { width:100%; height:100%; object-fit:cover; }
+  #result-photo { width:300px; height:300px; border-radius:20px; object-fit:cover; }
+  #analyzing {
+    position:absolute; bottom:10px; left:0; right:0;
+    color:#fff; background:rgba(0,0,0,0.5);
   }
-  @keyframes scan {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100%); }
-  }
-  button { padding: 10px 20px; border:none; border-radius:4px; background:#4CAF50; color:#fff; cursor:pointer; }
-  pre { white-space: pre-wrap; text-align: left; background: rgba(255,255,255,0.8); padding:1rem; border-radius:8px; }
+  .result-container { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; }
+  .info-panel { width:300px; background:rgba(255,255,255,0.8); padding:1rem; border-radius:10px; text-align:left; }
+  .attr-table { width:100%; border-collapse:collapse; }
+  .attr-table td { padding:4px; border-bottom:1px solid #ccc; }
+  .chart { margin-top:1rem; }
+  .bar-row { display:flex; align-items:center; margin-bottom:6px; font-size:0.9rem; }
+  .bar-label { width:60px; }
+  .bar-container { flex:1; background:#eee; height:8px; border-radius:4px; margin:0 5px; }
+  .bar { height:100%; background:#4CAF50; border-radius:4px; }
+  .bar-value { width:30px; text-align:right; font-size:0.8rem; }
+  button { padding:10px 20px; border:none; border-radius:4px; background:#4CAF50; color:#fff; cursor:pointer; }
+  pre { white-space:pre-wrap; text-align:left; background:rgba(255,255,255,0.8); padding:1rem; border-radius:8px; }
 </style>
 </head>
 <body>
 <div id="step1" class="page active">
   <h1>菜品推荐</h1>
-  <div class="camera-area"></div>
-  <button id="start-btn">点击拍照</button>
-</div>
-<div id="step2" class="page">
-  <h2>实时拍照预览</h2>
   <div class="camera-area">
-    <video id="video" autoplay muted playsinline></video>
+    <video id="video" autoplay muted playsinline style="display:none;"></video>
+    <canvas id="capture-canvas" width="300" height="300" style="display:none;"></canvas>
     <div id="analyzing" style="display:none;">分析中...</div>
   </div>
-  <button id="capture-btn">拍照</button>
+  <button id="start-btn">点击拍照</button>
+  <button id="capture-btn" style="display:none;">拍照</button>
 </div>
-<div id="step3" class="page">
-  <h2>识别中...</h2>
-  <div class="camera-area">
-    <canvas id="capture-canvas" width="300" height="300"></canvas>
-    <div id="scan-animation"></div>
-  </div>
-</div>
-<div id="step4" class="page">
+<div id="step2" class="page">
   <h2>面部分析结果</h2>
-  <img id="result-photo" style="width:150px;border-radius:10px;" />
-  <div id="analysis-results"></div>
+  <div class="result-container">
+    <img id="result-photo" />
+    <div id="analysis-results" class="info-panel"></div>
+  </div>
   <button id="to-fortune-btn">下一步</button>
 </div>
-<div id="step5" class="page">
+<div id="step3" class="page">
   <h2>今日玄学分析</h2>
-  <div id="fortune-results"></div>
+  <div id="fortune-results" class="info-panel" style="margin:auto;"></div>
   <button id="to-final-btn">获取食疗推荐</button>
 </div>
-<div id="step6" class="page">
+<div id="step4" class="page">
   <h2>食疗建议</h2>
   <pre id="final-recommendation"></pre>
 </div>
@@ -90,8 +87,6 @@ const step1 = document.getElementById('step1');
 const step2 = document.getElementById('step2');
 const step3 = document.getElementById('step3');
 const step4 = document.getElementById('step4');
-const step5 = document.getElementById('step5');
-const step6 = document.getElementById('step6');
 const startBtn = document.getElementById('start-btn');
 const captureBtn = document.getElementById('capture-btn');
 const toFortuneBtn = document.getElementById('to-fortune-btn');
@@ -105,7 +100,7 @@ const fortuneResults = document.getElementById('fortune-results');
 const finalRec = document.getElementById('final-recommendation');
 
 function show(step){
-  [step1,step2,step3,step4,step5,step6].forEach(p=>p.classList.remove('active'));
+  [step1,step2,step3,step4].forEach(p=>p.classList.remove('active'));
   step.classList.add('active');
 }
 
@@ -114,6 +109,7 @@ async function initCamera(){
     mediaStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
     video.srcObject = mediaStream;
     await video.play();
+    video.style.display = 'block';
   }catch(e){
     alert('无法访问摄像头');
   }
@@ -122,31 +118,33 @@ async function initCamera(){
 function stopCamera(){
   if(mediaStream){
     mediaStream.getTracks().forEach(t=>t.stop());
-    mediaStream=null;
+    mediaStream = null;
   }
 }
 
 startBtn.onclick = async () => {
-  show(step2);
   await initCamera();
+  startBtn.style.display = 'none';
+  captureBtn.style.display = 'inline-block';
 };
 
 captureBtn.onclick = async () => {
-  analyzing.style.display='block';
+  analyzing.style.display = 'block';
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video,0,0,300,300);
   const dataUrl = canvas.toDataURL('image/jpeg');
-  resultPhoto.src = dataUrl;
-  show(step3);
   stopCamera();
+  video.style.display = 'none';
+  analyzing.style.display = 'none';
+  resultPhoto.src = dataUrl;
   const blob = await (await fetch(dataUrl)).blob();
   const detect = await detectFaces(blob);
-  show(step4);
   renderFace(detect);
+  show(step2);
 };
 
 toFortuneBtn.onclick = async () => {
-  const userInfo = {}; // 可扩展问卷信息
+  const userInfo = {};
   const face = latestFaceInfo;
   const prompt = buildPrompt(face,userInfo);
   const text = await callGPT(prompt);
@@ -160,11 +158,11 @@ toFortuneBtn.onclick = async () => {
       finalRec.textContent = text;
     }
   }
-  show(step5);
+  show(step3);
 };
 
 toFinalBtn.onclick = () => {
-  show(step6);
+  show(step4);
 };
 
 let latestFaceInfo = null;
@@ -190,24 +188,31 @@ async function detectFaces(imageBlob){
   return data;
 }
 
+function barRows(obj){
+  let rows = '';
+  for(const k in obj){
+    const v = obj[k];
+    rows += `<div class="bar-row"><span class="bar-label">${k}</span><div class="bar-container"><div class="bar" style="width:${v}%"></div></div><span class="bar-value">${v.toFixed(1)}</span></div>`;
+  }
+  return rows;
+}
+
 function renderFace(data){
   if(!data || !data.faces || !data.faces.length){
     analysisResults.textContent = '未检测到人脸';
     return;
   }
-  const face = data.faces[0];
-  const attr = face.attributes;
-  let html = '';
-  html += '性别: '+attr.gender.value+'<br>';
-  html += '年龄: '+attr.age.value+'<br>';
-  html += '微笑度: '+attr.smile.value.toFixed(2)+'%<br>';
+  const attr = data.faces[0].attributes;
+  let html = '<table class="attr-table">';
+  html += `<tr><td>性别</td><td>${attr.gender.value}</td></tr>`;
+  html += `<tr><td>年龄</td><td>${attr.age.value}</td></tr>`;
+  html += `<tr><td>微笑度</td><td>${attr.smile.value.toFixed(2)}%</td></tr>`;
+  html += '</table>';
   if(attr.emotion){
-    html += '情绪:<br>';
-    for(const k in attr.emotion){ html += k+':'+attr.emotion[k].toFixed(2)+'<br>'; }
+    html += `<div class="chart"><h3>情绪分布</h3>${barRows(attr.emotion)}</div>`;
   }
   if(attr.skinstatus){
-    html += '皮肤状态:<br>';
-    for(const k in attr.skinstatus){ html += k+':'+attr.skinstatus[k].toFixed(2)+'<br>'; }
+    html += `<div class="chart"><h3>皮肤状态</h3>${barRows(attr.skinstatus)}</div>`;
   }
   analysisResults.innerHTML = html;
 }
