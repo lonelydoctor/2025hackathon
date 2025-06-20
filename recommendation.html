@@ -213,7 +213,10 @@ async function detectFaces(imageBlob){
   formData.append('api_secret','vcBaU1AknR9S_NgPnc8oZGrEn-H-_NOk');
   formData.append('image_file',imageBlob,'photo.jpg');
   formData.append('return_attributes','gender,age,smiling,emotion,skinstatus');
-  const resp = await fetch('https://api-cn.faceplusplus.com/facepp/v3/detect',{method:'POST',body:formData});
+  const resp = await fetch('https://corsproxy.io/?https://api-cn.faceplusplus.com/facepp/v3/detect',{
+    method:'POST',
+    body:formData
+  });
   const data = await resp.json();
   if(data.faces && data.faces.length){
     const attr = data.faces[0].attributes;
