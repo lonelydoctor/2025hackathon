@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>菜品推荐流程</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    min-height: 100vh;
+    background: url('./images/dishes-2.jpeg') center/cover fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(8px) brightness(1.1);
+    z-index: -1;
+  }
+  .page { display: none; text-align: center; }
+  .page.active { display: block; }
+  .camera-area {
+    width: 300px; height: 300px;
+    background: white; border-radius: 20px;
+    margin: 1rem auto; position: relative;
+    overflow: hidden;
+  }
+  #video { width: 100%; height: 100%; object-fit: cover; }
+  #analyzing { position: absolute; bottom: 10px; left: 0; right: 0; color: #fff; background: rgba(0,0,0,0.5); }
+  #scan-animation {
+    position: absolute; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,255,0,0.2);
+    animation: scan 2s infinite;
+  }
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+  button { padding: 10px 20px; border:none; border-radius:4px; background:#4CAF50; color:#fff; cursor:pointer; }
+  pre { white-space: pre-wrap; text-align: left; background: rgba(255,255,255,0.8); padding:1rem; border-radius:8px; }
+</style>
+</head>
+<body>
+<div id="step1" class="page active">
+  <h1>菜品推荐</h1>
+  <div class="camera-area"></div>
+  <button id="start-btn">点击拍照</button>
+</div>
+<div id="step2" class="page">
+  <h2>实时拍照预览</h2>
+  <div class="camera-area">
+    <video id="video" autoplay muted playsinline></video>
+    <div id="analyzing" style="display:none;">分析中...</div>
+  </div>
+  <button id="capture-btn">拍照</button>
+</div>
+<div id="step3" class="page">
+  <h2>识别中...</h2>
+  <div class="camera-area">
+    <canvas id="capture-canvas" width="300" height="300"></canvas>
+    <div id="scan-animation"></div>
+  </div>
+</div>
+<div id="step4" class="page">
+  <h2>面部分析结果</h2>
+  <img id="result-photo" style="width:150px;border-radius:10px;" />
+  <div id="analysis-results"></div>
+  <button id="to-fortune-btn">下一步</button>
+</div>
+<div id="step5" class="page">
+  <h2>今日玄学分析</h2>
+  <div id="fortune-results"></div>
+  <button id="to-final-btn">获取食疗推荐</button>
+</div>
+<div id="step6" class="page">
+  <h2>食疗建议</h2>
+  <pre id="final-recommendation"></pre>
+</div>
+<script>
+let mediaStream = null;
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
+const step4 = document.getElementById('step4');
+const step5 = document.getElementById('step5');
+const step6 = document.getElementById('step6');
+const startBtn = document.getElementById('start-btn');
+const captureBtn = document.getElementById('capture-btn');
+const toFortuneBtn = document.getElementById('to-fortune-btn');
+const toFinalBtn = document.getElementById('to-final-btn');
+const video = document.getElementById('video');
+const canvas = document.getElementById('capture-canvas');
+const analyzing = document.getElementById('analyzing');
+const resultPhoto = document.getElementById('result-photo');
+const analysisResults = document.getElementById('analysis-results');
+const fortuneResults = document.getElementById('fortune-results');
+const finalRec = document.getElementById('final-recommendation');
+
+function show(step){
+  [step1,step2,step3,step4,step5,step6].forEach(p=>p.classList.remove('active'));
+  step.classList.add('active');
+}
+
+async function initCamera(){
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+    video.srcObject = mediaStream;
+    await video.play();
+  }catch(e){
+    alert('无法访问摄像头');
+  }
+}
+
+function stopCamera(){
+  if(mediaStream){
+    mediaStream.getTracks().forEach(t=>t.stop());
+    mediaStream=null;
+  }
+}
+
+startBtn.onclick = async () => {
+  show(step2);
+  await initCamera();
+};
+
+captureBtn.onclick = async () => {
+  analyzing.style.display='block';
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video,0,0,300,300);
+  const dataUrl = canvas.toDataURL('image/jpeg');
+  resultPhoto.src = dataUrl;
+  show(step3);
+  stopCamera();
+  const blob = await (await fetch(dataUrl)).blob();
+  const detect = await detectFaces(blob);
+  show(step4);
+  renderFace(detect);
+};
+
+toFortuneBtn.onclick = async () => {
+  const userInfo = {}; // 可扩展问卷信息
+  const face = latestFaceInfo;
+  const prompt = buildPrompt(face,userInfo);
+  const text = await callGPT(prompt);
+  if(text){
+    try{
+      const obj = JSON.parse(text);
+      fortuneResults.textContent = JSON.stringify(obj.metaphysics, null, 2);
+      finalRec.textContent = JSON.stringify(obj, null, 2);
+    }catch(e){
+      fortuneResults.textContent = text;
+      finalRec.textContent = text;
+    }
+  }
+  show(step5);
+};
+
+toFinalBtn.onclick = () => {
+  show(step6);
+};
+
+let latestFaceInfo = null;
+
+async function detectFaces(imageBlob){
+  const formData = new FormData();
+  formData.append('api_key','mSptsjK7hxWAuKyOGmTjQAhYwJ2MaCJJ');
+  formData.append('api_secret','vcBaU1AknR9S_NgPnc8oZGrEn-H-_NOk');
+  formData.append('image_file',imageBlob,'photo.jpg');
+  formData.append('return_attributes','gender,age,smiling,emotion,skinstatus');
+  const resp = await fetch('https://api-cn.faceplusplus.com/facepp/v3/detect',{method:'POST',body:formData});
+  const data = await resp.json();
+  if(data.faces && data.faces.length){
+    const attr = data.faces[0].attributes;
+    latestFaceInfo = {
+      gender: attr.gender.value,
+      age: attr.age.value,
+      smile: attr.smile.value,
+      emotion: attr.emotion,
+      skin: attr.skinstatus
+    };
+  }
+  return data;
+}
+
+function renderFace(data){
+  if(!data || !data.faces || !data.faces.length){
+    analysisResults.textContent = '未检测到人脸';
+    return;
+  }
+  const face = data.faces[0];
+  const attr = face.attributes;
+  let html = '';
+  html += '性别: '+attr.gender.value+'<br>';
+  html += '年龄: '+attr.age.value+'<br>';
+  html += '微笑度: '+attr.smile.value.toFixed(2)+'%<br>';
+  if(attr.emotion){
+    html += '情绪:<br>';
+    for(const k in attr.emotion){ html += k+':'+attr.emotion[k].toFixed(2)+'<br>'; }
+  }
+  if(attr.skinstatus){
+    html += '皮肤状态:<br>';
+    for(const k in attr.skinstatus){ html += k+':'+attr.skinstatus[k].toFixed(2)+'<br>'; }
+  }
+  analysisResults.innerHTML = html;
+}
+
+const PROMPT_TEMPLATE = `你是「AI面相玄学营养推荐师」，根据用户面部信息生成食疗推荐。\n[FACE]\n`;
+function buildPrompt(face,user){
+  return PROMPT_TEMPLATE.replace('[FACE]',JSON.stringify(face));
+}
+async function callGPT(prompt){
+  const resp = await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer YOUR_OPENAI_API_KEY'},
+    body:JSON.stringify({model:'gpt-4o',messages:[{role:'user',content:prompt}]})
+  });
+  const data = await resp.json();
+  return data.choices && data.choices[0].message.content;
+}
+</script>
+</body>
+</html>
