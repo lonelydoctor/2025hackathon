@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今天中午吃什么</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+      min-height: 100vh;
+      background: url('./images/background.jpeg') fixed;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+
+    /* 模糊背景效果 */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: inherit;
+      background-size: cover;
+      filter: blur(10px) brightness(1.1);
+      z-index: -1;
+    }
+
+    /* 主标题样式 */
+    h1 {
+      font-size: 5.5rem;
+      font-weight: bold;
+      color: #000;
+      text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.7);
+      margin-bottom: 60px;
+      letter-spacing: 1px;
+      text-align: center;
+      position: relative;
+      z-index: 5;
+      padding: 0 20px;
+    }
+
+    /* 按钮容器 */
+    /* 圆形按钮样式 */
+    .ingredients-btn,
+    .dishes-btn,
+    .recipes-btn {
+      border-radius: 60px;  /* 调整为60px圆角半径 */
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      overflow: hidden;
+      border: none;
+    }
+    
+    /* 响应式调整 */
+    @media (min-width: 768px) {
+      .ingredients-btn,
+      .dishes-btn,
+      .recipes-btn {
+        width: 150px;
+        height: 150px;
+      }
+    }
+    
+    /* 容器布局优化 */
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 120px;
+      flex-wrap: wrap;
+      padding: 2rem;
+    }
+
+    /* 单个按钮尺寸 */
+    .ingredients-btn,
+    .dishes-btn,
+    .recipes-btn {
+      width: 230px;
+      height: 230px;
+      border-radius:  50%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+      border: none;
+    }
+
+    /* 悬停效果 */
+    .ingredients-btn:hover,
+    .dishes-btn:hover,
+    .recipes-btn:hover {
+      transform: scale(1.05);
+      border: none;
+    }
+
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      .buttons {
+        gap: 20px;
+      }
+      .ingredients-btn,
+      .dishes-btn,
+      .recipes-btn {
+        width: 90%;
+        height: 150px;
+      }
+    }
+
+    /* 按钮通用样式 */
+    .button {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.4s ease;
+      
+    }
+    
+    /* 确保图片显示 */
+    .button-group button {
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* 按钮悬停效果 */
+    .button:hover {
+      transform: scale(1.1) translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    /* 工具提示样式 */
+    .button-tooltip {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      margin-top: 20px;
+      font-size: 1rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .button:hover .button-tooltip {
+      opacity: 1;
+      margin-top: 15px;
+    }
+
+    /* 按钮图标（使用CSS绘制） */
+    .button::before {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 60px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    /* 按钮蒙层样式 */
+    .ingredients-btn::after,
+    .dishes-btn::after,
+    .recipes-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    /* 专属文案 */
+    .ingredients-btn::after {
+      content: '食材甄选';
+      font-size: 4.8rem;
+    }
+    .dishes-btn::after {
+      justify-content: center;
+      align-items: center;
+      content: '菜品推荐';
+      font-size:  4.8rem;
+      text-align: center;
+    }
+    .recipes-btn::after {
+      content: '食谱定制';
+      font-size:  4.8rem;
+    }
+
+    /* 悬停效果 */
+    .ingredients-btn:hover::after,
+    .dishes-btn:hover::after,
+    .recipes-btn:hover::after {
+      opacity: 1;
+}
+    
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 40px;
+      }
+      
+      .buttons {
+        gap: 30px;
+      }
+      
+      .button {
+        width: 120px;
+        height: 120px;
+      }
+      
+      .button-tooltip {
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .buttons {
+        gap: 15px;
+      }
+      
+      .button {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .button::before {
+        width: 45px;
+        height: 45px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>今天中午吃什么?</h1>
+  
+  <div class="buttons">
+    
+    
+    <!-- 食材甄选按钮 -->
+    <button class="ingredients-btn" style="background-image: url('./images/ingredients.jpeg')">
+    
+    <!-- 菜品推荐按钮 -->
+      <a href="dishespage.html" class="dishes-btn">
+        <button class="dishes-btn" style="background-image: url('./images/dishes.jpeg')">
+          <div class="button-tooltip">菜品推荐</div>
+        </button>
+      </a>
+      <div class="button-tooltip">菜品推荐</div>
+    
+    
+    <!-- 食谱定制按钮 -->
+    <button class="recipes-btn" style="background-image: url('./images/recipes.jpeg')">
+      <div class="button-tooltip">食谱定制</div>
+    </div>
+
+  
+  <script>
+    // 鼠标悬停时动画效果增强
+    document.querySelectorAll('.button').forEach(button => {
+      button.addEventListener('mouseenter', function() {
+        const tooltip = this.querySelector('.button-tooltip');
+        tooltip.style.transition = 'none';
+        tooltip.style.opacity = '1';
+        tooltip.style.marginTop = '15px';
+      });
+      
+      button.addEventListener('mouseleave', function() {
+        const tooltip = this.querySelector('.button-tooltip');
+        tooltip.style.transition = '';
+        setTimeout(() => {
+          tooltip.style.opacity = '0';
+          tooltip.style.marginTop = '20px';
+        }, 20);
+      });
+    });
+    
+    // 点击按钮的功能（可以进一步扩展）
+    document.querySelectorAll('.button').forEach((button, index) => {
+      button.addEventListener('click', function() {
+        const actions = ["食材甄选", "菜品推荐", "食谱定制"];
+        alert(`进入功能：${actions[index]}`);
+        
+        // 实际应用中可以跳转到对应页面
+        // window.location.href = `/${actions[index]}.html`;
+      });
+    });
+  </script>
+</body>
+</html>
+
