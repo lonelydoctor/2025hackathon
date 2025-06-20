@@ -10,7 +10,8 @@
   #steps{position:relative;width:90%;max-width:600px;overflow:hidden;}
   .step{width:100%;display:none;text-align:center;background:rgba(255,255,255,0.8);border-radius:10px;padding:20px;}
   .step.active{display:block;}
-  .nav-btn{margin-top:20px;}
+  .nav-btns{display:flex; gap:20px; justify-content:center; margin-top:20px;}
+  .nav-btn{padding:8px 16px;border:none;border-radius:6px;background:white;color:#7b4f21;cursor:pointer;}
   .dots{margin-top:10px;text-align:center;}
   .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#ccc;margin:0 4px;}
   .dot.active{background:#4caf50;}
@@ -44,8 +45,10 @@
   <span class="dot"></span>
   <span class="dot"></span>
 </div>
-<button class="nav-btn" onclick="prevStep()">上一页</button>
-<button class="nav-btn" onclick="nextStep()">下一页</button>
+<div class="nav-btns">
+  <button class="nav-btn" onclick="prevStep()">上一页</button>
+  <button class="nav-btn" onclick="nextStep()">下一页</button>
+</div>
 <script>
 var current=0;
 var steps=document.querySelectorAll('.step');
