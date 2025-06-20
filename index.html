@@ -272,24 +272,21 @@
   <h1>今天中午吃什么?</h1>
   
   <div class="buttons">
-    
-    
     <!-- 食材甄选按钮 -->
-    <button class="ingredients-btn" style="background-image: url('./images/ingredients.jpeg')">
-    
+    <button class="ingredients-btn button" style="background-image: url('./images/ingredients.jpeg')">
+      <div class="button-tooltip">食材甄选</div>
+    </button>
+
     <!-- 菜品推荐按钮 -->
-      <a href="recommendation.html" class="dishes-btn">
-        <button class="dishes-btn" style="background-image: url('./images/dishes.jpeg')">
-          <div class="button-tooltip">菜品推荐</div>
-        </button>
-      </a>
+    <button class="dishes-btn button" style="background-image: url('./images/dishes.jpeg')">
       <div class="button-tooltip">菜品推荐</div>
-    
-    
+    </button>
+
     <!-- 食谱定制按钮 -->
-    <button class="recipes-btn" style="background-image: url('./images/recipes.jpeg')">
+    <button class="recipes-btn button" style="background-image: url('./images/recipes.jpeg')">
       <div class="button-tooltip">食谱定制</div>
-    </div>
+    </button>
+  </div>
 
   
   <script>
@@ -314,12 +311,13 @@
     
     // 点击按钮的功能（可以进一步扩展）
     document.querySelectorAll('.button').forEach((button, index) => {
+      const links = ["#", "recommendation.html", "recipe_photo.html"];
       button.addEventListener('click', function() {
-        const actions = ["食材甄选", "菜品推荐", "食谱定制"];
-        alert(`进入功能：${actions[index]}`);
-        
-        // 实际应用中可以跳转到对应页面
-        // window.location.href = `/${actions[index]}.html`;
+        if(links[index] === "#") {
+          alert('进入功能：食材甄选');
+        } else {
+          window.location.href = links[index];
+        }
       });
     });
   </script>

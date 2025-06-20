@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食谱定制 - 菜谱指导</title>
+<style>
+  body{margin:0;font-family:Arial,"Microsoft YaHei",sans-serif;background:#f7efd2 url('./images/background.jpeg') center/cover fixed;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-top:30px;}
+  h1{font-size:2rem;font-weight:bold;margin-bottom:10px;}
+  #steps{position:relative;width:90%;max-width:600px;overflow:hidden;}
+  .step{width:100%;display:none;text-align:center;background:rgba(255,255,255,0.8);border-radius:10px;padding:20px;}
+  .step.active{display:block;}
+  .nav-btn{margin-top:20px;}
+  .dots{margin-top:10px;text-align:center;}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#ccc;margin:0 4px;}
+  .dot.active{background:#4caf50;}
+  .ingredients{ text-align:left; margin-bottom:10px; }
+</style>
+</head>
+<body>
+<h1>食谱定制</h1>
+<div id="steps">
+  <div class="step active" id="s1">
+    <h2>Step 1 食材准备</h2>
+    <div class="ingredients">
+      <strong>主料:</strong> 甜玉米粒二百克 鸡蛋三个<br>
+      <strong>配菜:</strong> 香葱一根 胡萝卜三十克<br>
+      <strong>调味料:</strong> 盐半茶匙 糖一小勺 水淀粉一份<br>
+      <strong>技巧:</strong> 玉米粒焯水方便去腥
+    </div>
+    <img src="./images/ingredients.jpeg" style="width:100%;border-radius:10px;" alt="准备">
+  </div>
+  <div class="step" id="s2">
+    <h2>Step 2 烹饪步骤</h2>
+    <img src="./images/dishes.jpeg" style="width:100%;border-radius:10px;" alt="烹饪">
+  </div>
+  <div class="step" id="s3">
+    <h2>Step 3 升级技巧</h2>
+    <img src="./images/recipes.jpeg" style="width:100%;border-radius:10px;" alt="完成">
+  </div>
+</div>
+<div class="dots">
+  <span class="dot active"></span>
+  <span class="dot"></span>
+  <span class="dot"></span>
+</div>
+<button class="nav-btn" onclick="prevStep()">上一页</button>
+<button class="nav-btn" onclick="nextStep()">下一页</button>
+<script>
+var current=0;
+var steps=document.querySelectorAll('.step');
+var dots=document.querySelectorAll('.dot');
+function show(idx){
+  steps.forEach((s,i)=>{s.classList.toggle('active',i===idx)});
+  dots.forEach((d,i)=>{d.classList.toggle('active',i===idx)});
+  current=idx;
+}
+function prevStep(){ if(current>0) show(current-1); }
+function nextStep(){ if(current<steps.length-1) show(current+1); }
+</script>
+</body>
+</html>

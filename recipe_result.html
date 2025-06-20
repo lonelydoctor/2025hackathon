@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食谱定制 - 识别结果</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, "Microsoft YaHei", sans-serif;
+    background: #f7efd2 url('./images/background.jpeg') center/cover fixed;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 30px;
+  }
+  h1 { font-size: 2rem; font-weight: bold; margin-bottom:20px; }
+  .container { display:flex; flex-wrap:wrap; width:90%; max-width:900px; }
+  .photo { flex:1; min-width:240px; text-align:center; }
+  .photo img { width:90%; max-width:300px; border-radius:10px; }
+  .photo button { margin-top:10px; padding:6px 14px; border:none; border-radius:6px; background:#fff; cursor:pointer; }
+  .info { flex:1; min-width:240px; padding:0 10px; }
+  .info section { background:rgba(255,255,255,0.8); padding:10px; border-radius:10px; margin-bottom:10px; }
+  .info ul { list-style:none; padding:0; }
+  .info li { margin-bottom:6px; }
+  .add-btn { margin-top:6px; padding:4px 10px; border:none; background:#fff; border-radius:6px; cursor:pointer; }
+</style>
+</head>
+<body>
+  <h1>食谱定制</h1>
+  <div class="container">
+    <div class="photo">
+      <img src="./images/recipes.jpeg" alt="food">
+      <button onclick="location.href='recipe_photo.html'">重试一次</button>
+    </div>
+    <div class="info">
+      <section>
+        <h3>已有食物</h3>
+        <ul>
+          <li>黄瓜 1根 200g <button>编辑</button> <button>删除</button></li>
+          <li>鸡蛋 2个 100g <button>编辑</button> <button>删除</button></li>
+        </ul>
+        <button class="add-btn">添加更多</button>
+      </section>
+      <section>
+        <h3>营养成分</h3>
+        <ul>
+          <li>能量 200kcal <button>编辑</button> <button>删除</button></li>
+          <li>蛋白质 10g <button>编辑</button> <button>删除</button></li>
+          <li>脂肪 5g <button>编辑</button> <button>删除</button></li>
+          <li>碳水化合物 20g <button>编辑</button> <button>删除</button></li>
+        </ul>
+        <button class="add-btn">添加更多</button>
+      </section>
+    </div>
+  </div>
+  <button class="capture-btn" style="margin-top:20px;" onclick="location.href='recipe_dishes.html'">生成菜品</button>
+</body>
+</html>
