@@ -42,12 +42,12 @@
   .icon-btn { background:none; border:none; font-size:1.2rem; cursor:pointer; }
 
   /* swiper */
-  .swiper { display:flex; width:300%; transition:transform 0.4s ease; }
-  .slide { width:100%; box-sizing:border-box; padding:20px; }
+  .swiper { display:flex; width:300vw; transition:transform 0.4s ease; }
+  .slide { width:100vw; box-sizing:border-box; padding:20px; }
   .result-container { display:flex; justify-content:center; align-items:center; gap:20px; flex-wrap:nowrap; }
   #result-photo,#fortune-photo {
-    width:200px;
-    height:200px;
+    width:260px;
+    height:260px;
     border-radius:20px;
     object-fit:cover;
   }
@@ -262,18 +262,20 @@ function renderFortuneStatic(){
 }
 
 function renderDishesStatic(){
+  // 若想替换菜品图片，可在下方列表中修改 img 字段的路径
   const list = [
-    {category:'幸运色推荐', dish:'蒜蓉炒菠菜'},
-    {category:'面部状态调理', dish:'冬瓜薏米排骨汤'},
-    {category:'情绪调理', dish:'百合银耳莲子羹'},
-    {category:'节气特色食材', dish:'凉拌苦瓜木耳'}
+    {category:'幸运色推荐', dish:'蒜蓉炒菠菜', img:'./images/dishes.jpeg'},
+    {category:'面部状态调理', dish:'冬瓜薏米排骨汤', img:'./images/dishes.jpeg'},
+    {category:'情绪调理', dish:'百合银耳莲子羹', img:'./images/dishes.jpeg'},
+    {category:'节气特色食材', dish:'凉拌苦瓜木耳', img:'./images/dishes.jpeg'}
   ];
   dishCards.innerHTML='';
   list.forEach(item=>{
     const card=document.createElement('div');
     card.className='dish-card';
     const img=document.createElement('img');
-    img.src='./images/dishes.jpeg';
+    // 如需更换菜品图片，在列表中修改对应项的 img 字段
+    img.src = item.img;
     const cat=document.createElement('div');
     cat.className='dish-category';
     cat.textContent=item.category;
