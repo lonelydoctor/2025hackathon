@@ -205,18 +205,18 @@
     /* 专属文案 */
     .ingredients-btn::after {
       content: '食材甄选';
-      font-size: 4.8rem;
+      font-size: 3.2rem;
     }
     .dishes-btn::after {
       justify-content: center;
       align-items: center;
       content: '菜品推荐';
-      font-size:  4.8rem;
+      font-size: 3.2rem;
       text-align: center;
     }
     .recipes-btn::after {
       content: '食谱定制';
-      font-size:  4.8rem;
+      font-size: 3.2rem;
     }
 
     /* 悬停效果 */
@@ -272,27 +272,22 @@
   <h1>今天中午吃什么?</h1>
   
   <div class="buttons">
-    
-    
     <!-- 食材甄选按钮 -->
-    <button class="ingredients-btn" style="background-image: url('./images/ingredients.jpeg')">
-    
-    <!-- 菜品推荐按钮 -->
-      <a href="recommendation.html" class="dishes-btn">
-        <button class="dishes-btn" style="background-image: url('./images/dishes.jpeg')">
-          <div class="button-tooltip">菜品推荐</div>
-        </button>
-      </a>
-      <div class="button-tooltip">菜品推荐</div>
-    
-    
-    <!-- 食谱定制按钮 -->
-    <button class="recipes-btn" style="background-image: url('./images/recipes.jpeg')">
-      <div class="button-tooltip">食谱定制</div>
-    </div>
+    <button class="ingredients-btn button" style="background-image: url(./images/ingredients.jpeg)">
+      <div class="button-tooltip">食材甄选</div>
+    </button>
 
-  
-  <script>
+    <!-- 菜品推荐按钮 -->
+    <a href="recommendation.html" class="dishes-btn button" style="background-image: url(./images/dishes.jpeg)">
+      <div class="button-tooltip">菜品推荐</div>
+    </a>
+
+    <!-- 食谱定制按钮 -->
+    <button class="recipes-btn button" style="background-image: url(./images/recipes.jpeg)">
+      <div class="button-tooltip">食谱定制</div>
+    </button>
+  </div>
+<script>
     // 鼠标悬停时动画效果增强
     document.querySelectorAll('.button').forEach(button => {
       button.addEventListener('mouseenter', function() {
@@ -312,16 +307,7 @@
       });
     });
     
-    // 点击按钮的功能（可以进一步扩展）
-    document.querySelectorAll('.button').forEach((button, index) => {
-      button.addEventListener('click', function() {
-        const actions = ["食材甄选", "菜品推荐", "食谱定制"];
-        alert(`进入功能：${actions[index]}`);
-        
-        // 实际应用中可以跳转到对应页面
-        // window.location.href = `/${actions[index]}.html`;
-      });
-    });
+    // 移除默认弹窗提示，仅保留悬停动画效果
   </script>
 </body>
 </html>
