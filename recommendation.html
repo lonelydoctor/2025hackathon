@@ -414,15 +414,17 @@ function buildPrompt(face,user){
   return PROMPT_TEMPLATE.replace('[FACE_JSON]', JSON.stringify(face))
                         .replace('[USER_JSON]', JSON.stringify(user||{}));
 }
-const DASHSCOPE_API_KEY = 'sk-2487917f84dd4a948891b51a22a0832e';
 async function callGPT(prompt){
-  const resp = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',{
+  const resp = await fetch('/gpt',{
     method:'POST',
-    headers:{ 'Content-Type':'application/json','Authorization':'Bearer '+DASHSCOPE_API_KEY },
-    body:JSON.stringify({ model:'deepseek-r1', messages:[{role:'user',content:prompt}] })
+    headers:{ 'Content-Type':'application/json' },
+    body:JSON.stringify({ prompt })
   });
   const data = await resp.json();
-  return data.choices && data.choices[0].message.content;
+  if(data.choices && data.choices[0] && data.choices[0].message){
+    return data.choices[0].message.content;
+  }
+  return '';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
