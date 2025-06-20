@@ -39,8 +39,13 @@
   /* swiper */
   .swiper { display:flex; width:300%; transition:transform 0.4s ease; }
   .slide { width:100%; box-sizing:border-box; padding:20px; }
-  .result-container { display:flex; justify-content:center; align-items:center; gap:20px; flex-wrap:wrap; }
-  #result-photo,#fortune-photo { max-width:150px; height:auto; border-radius:20px; object-fit:cover; }
+  .result-container { display:flex; justify-content:center; align-items:center; gap:20px; flex-wrap:nowrap; }
+  #result-photo,#fortune-photo {
+    width:200px;
+    height:200px;
+    border-radius:20px;
+    object-fit:cover;
+  }
   .info-panel { background:rgba(255,255,255,0.9); padding:1rem; border-radius:10px; text-align:left; min-width:200px; }
   .attr-table { width:100%; border-collapse:collapse; }
   .attr-table td { padding:4px 6px; border-bottom:1px solid #ccc; }
@@ -183,7 +188,13 @@ captureBtn.onclick = async () => {
   renderFace(detect);
   const text = await callGPT(buildPrompt(latestFaceInfo,{}));
   if(text){
-    try{ const obj = JSON.parse(text); renderFortune(obj.metaphysics||{}); renderDishes(obj.recommendations||[]); }catch(e){ fortuneResults.textContent = text; }
+    try{
+      const obj = JSON.parse(text);
+      renderFortune(obj.metaphysics||{}, obj.face_summary, obj.mood_summary);
+      renderDishes(obj.recommendations||[]);
+    }catch(e){
+      fortuneResults.textContent = text;
+    }
   }
   showPage(resultPage);
   showSlide(0);
@@ -233,7 +244,7 @@ function renderFace(data){
   analysisResults.innerHTML=html;
 }
 
-function renderFortune(meta){
+function renderFortune(meta, faceSummary='', moodSummary=''){
   let html='';
   if(meta.lucky_color){ html+=`<div>幸运色：<span class="color-box" style="background:${meta.lucky_color}"></span>${meta.lucky_color}</div>`; }
   if(meta.guardian_star) html+=`<div>守护星：${meta.guardian_star}</div>`;
@@ -242,6 +253,8 @@ function renderFortune(meta){
   if(meta.today_ji) html+=`<div>忌：${meta.today_ji}</div>`;
   if(meta.lucky_number) html+=`<div>幸运数字：${meta.lucky_number}</div>`;
   html+=`<div>日期：${new Date().toLocaleDateString()}</div>`;
+  if(faceSummary) html+=`<div>${faceSummary}</div>`;
+  if(moodSummary) html+=`<div>${moodSummary}</div>`;
   fortuneResults.innerHTML=html;
 }
 
@@ -261,9 +274,136 @@ function renderDishes(list){
   });
 }
 
-const PROMPT_TEMPLATE = `你是「AI面相玄学营养推荐师」，根据用户面部信息生成食疗推荐。\n[FACE]\n`;
-function buildPrompt(face,user){ return PROMPT_TEMPLATE.replace('[FACE]',JSON.stringify(face)); }
-const DASHSCOPE_API_KEY = 'YOUR_DASHSCOPE_API_KEY';
+const PROMPT_TEMPLATE = `你是「AI面相玄学营养推荐师」，融合面部识别结果、用户填写问卷信息、现代营养科学与东方玄学，为C端用户生成趣味、精准、个性化的午餐推荐建议。
+
+你的任务：
+- 输入数据：面部识别数据（必填）+ 用户问卷信息（选填）
+- 输出严格结构化的JSON格式，供前端系统解析展示；
+- 内容逻辑结合面部图像分析与用户个性化填写信息；
+- 保持创造性表达，避免模板重复，确保每日输出有新鲜感、社交传播性和娱乐体验。
+---
+
+【输入数据】
+
+### 必填输入（面部识别接口提供，始终存在）
+[FACE_JSON]
+
+选填输入（用户问卷信息，部分或全部可能缺省）
+[USER_JSON]
+
+你需要结合必填的面部识别结果，与选填的用户信息问卷，整合生成饮食推荐结果。选填问卷信息如果缺失，可仅基于面部识别数据独立完成生成；原则如下：
+
+填写的信息越多，内容应体现越丰富个性化；
+
+逻辑丰富，但输出需灵活多样，不得固定模板死板输出；
+
+保留充分创造空间，体现AI的创造力与娱乐性。
+
+一、各字段生成说明
+1. metaphysics（玄学信息）
+lucky_color：综合面部状态、情绪表现、近期关注方向、血型等自由发挥，参考五行色系（金白银、木青绿、水黑蓝、火红橙紫、土黄棕）。
+lucky_number：结合年龄、情绪、健康目标、玄学诉求等生成有积极寓意的幸运数字（1-9）。
+guardian_star：结合生日、血型、玄学诉求，自由设定东方玄学或趣味守护星（如：紫微、文昌、天喜、福德、招财猫等）。
+five_elements_food：生成今日宜食五行搭配描述（如：水木双修 清火养颜）。
+today_yi / today_ji：饮食与情绪上的宜忌提示，语言可幽默轻松。
+
+2. face_summary（面相玄学解读）
+融合面部皮肤指标、微笑度、气场生成趣味面相解读语。
+
+3. mood_summary（心情解读）
+综合面部情绪与自填今日心情自由生成，语言亲切轻松。
+
+4. recommendations（菜品推荐）
+每次输出 4 道菜品，每道菜品包含：
+
+dish：具体菜品名称；
+fun_comment：轻松幽默俏皮的趣味文案，可押韵可加emoji；
+metaphysics_reason：玄学背书逻辑；
+nutrition_value：通俗营养亮点；
+seasonal_reason：节气或时令合理性。
+
+菜品逻辑分布：
+第一菜：幸运色呼应食材；
+第二菜：面部皮肤调理食材；
+第三菜：健康目标&情绪疗愈食材；
+第四菜：节气时令食材。
+
+需注意：
+食材需符合用户忌口限制；
+充分体现健康目标（如减脂→控油高蛋白，增肌→补蛋白，护胃→软烂清淡）；
+结合活动量与当前能量代谢需求匹配推荐。
+
+5. personalized_insight（个人专属锦囊）
+health_tip：个性化健康建议；
+energy_tip：气场能量提醒；
+fortune_tip：运势玄学锦囊。
+
+6️. closing_quote（结尾祝福）
+一句适合社交分享的轻松结语。
+
+【特别提醒】
+除 JSON 结构之外严禁输出任何多余文字；
+保证输出内容每日有新鲜感，避免模板套路式结果；
+风格整体保持年轻化、趣味玄学、正能量、社交传播感极强。
+
+【输出格式要求】
+请严格按照如下结构化JSON格式输出，字段顺序、层级、命名必须一致。除JSON之外不得输出任何其他文字。
+
+{
+  "metaphysics": {
+    "lucky_color": "",
+    "lucky_number": "",
+    "guardian_star": "",
+    "five_elements_food": "",
+    "today_yi": "",
+    "today_ji": ""
+  },
+  "face_summary": "",
+  "mood_summary": "",
+  "recommendations": [
+    {
+      "dish": "",
+      "fun_comment": "",
+      "metaphysics_reason": "",
+      "nutrition_value": "",
+      "seasonal_reason": ""
+    },
+    {
+      "dish": "",
+      "fun_comment": "",
+      "metaphysics_reason": "",
+      "nutrition_value": "",
+      "seasonal_reason": ""
+    },
+    {
+      "dish": "",
+      "fun_comment": "",
+      "metaphysics_reason": "",
+      "nutrition_value": "",
+      "seasonal_reason": ""
+    },
+    {
+      "dish": "",
+      "fun_comment": "",
+      "metaphysics_reason": "",
+      "nutrition_value": "",
+      "seasonal_reason": ""
+    }
+  ],
+  "personalized_insight": {
+    "health_tip": "",
+    "energy_tip": "",
+    "fortune_tip": ""
+  },
+  "closing_quote": "",
+  "disclaimer": "AI食疗建议，仅供娱乐参考"
+}`;
+
+function buildPrompt(face,user){
+  return PROMPT_TEMPLATE.replace('[FACE_JSON]', JSON.stringify(face))
+                        .replace('[USER_JSON]', JSON.stringify(user||{}));
+}
+const DASHSCOPE_API_KEY = 'sk-2487917f84dd4a948891b51a22a0832e';
 async function callGPT(prompt){
   const resp = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',{
     method:'POST',
