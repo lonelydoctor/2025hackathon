@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食谱定制 - 菜品生成</title>
+<style>
+  body { margin:0; font-family:Arial, "Microsoft YaHei", sans-serif; background:#f7efd2 url('./images/background.jpeg') center/cover fixed; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding-top:30px; }
+  h1{ font-size:2rem; font-weight:bold; margin-bottom:20px; }
+  .cards{ display:flex; flex-wrap:wrap; justify-content:center; gap:20px; padding:10px; width:90%; max-width:900px; }
+  .card{ flex:0 0 220px; background:rgba(255,255,255,0.8); border-radius:10px; text-align:center; padding:10px; }
+  .card img{ width:100%; border-radius:10px; }
+  .select{ margin-top:6px; }
+  .nav{ margin-top:20px; }
+</style>
+</head>
+<body>
+  <h1>食谱定制</h1>
+  <div class="cards">
+    <div class="card">
+      <img src="./images/dishes.jpeg" alt="小炒黄牛肉">
+      <h3>小炒黄牛肉</h3>
+      <p>牛肉八十克 青椒五十克</p>
+      <div class="select"><input type="radio" name="dish" value="1"></div>
+    </div>
+    <div class="card">
+      <img src="./images/dishes.jpeg" alt="凉拌黄瓜">
+      <h3>凉拌黄瓜</h3>
+      <p>黄瓜二百克</p>
+      <div class="select"><input type="radio" name="dish" value="2"></div>
+    </div>
+    <div class="card">
+      <img src="./images/dishes.jpeg" alt="鸡蛋炒玉米">
+      <h3>鸡蛋炒玉米</h3>
+      <p>玉米一百克 鸡蛋一百克</p>
+      <div class="select"><input type="radio" name="dish" value="3"></div>
+    </div>
+    <div class="card">
+      <img src="./images/dishes.jpeg" alt="黄瓜炒鸡蛋">
+      <h3>黄瓜炒鸡蛋</h3>
+      <p>黄瓜一百克 鸡蛋一百克</p>
+      <div class="select"><input type="radio" name="dish" value="4"></div>
+    </div>
+  </div>
+  <button class="nav" onclick="location.href='recipe_guide.html'">下一步</button>
+</body>
+</html>

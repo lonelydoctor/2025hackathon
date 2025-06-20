@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食谱定制 - 拍照识别</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, "Microsoft YaHei", sans-serif;
+    background: #f7efd2 url('./images/background.jpeg') center/cover fixed;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 40px;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  .camera-area {
+    width: 80vw;
+    max-width: 320px;
+    background: white;
+    border-radius: 20px;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .capture-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: white;
+    color: #7b4f21;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <h1>食谱定制</h1>
+  <div class="camera-area">
+    <!-- 拍照画面占位 -->
+  </div>
+  <button class="capture-btn" onclick="location.href='recipe_result.html'">📷 点击拍照</button>
+</body>
+</html>
