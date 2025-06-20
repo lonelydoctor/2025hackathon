@@ -45,6 +45,26 @@
       border-radius: 4px;
       cursor: pointer;
     }
+    #result-image {
+      display: none;
+      max-width: 100%;
+      margin: 1rem auto;
+    }
+    #face-result {
+      display: none;
+      color: white;
+      margin-top: 1rem;
+    }
+    #retake-btn {
+      display: none;
+      margin: 1rem auto;
+      padding: 12px 24px;
+      background: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
     .result-container {
       display: flex;
       gap: 2rem;
@@ -85,6 +105,9 @@
       <video id="preview" autoplay muted playsinline></video>
     </div>
     <button id="capture-btn">📷点击拍照</button>
+    <img id="result-image">
+    <div id="face-result"></div>
+    <button id="retake-btn">重新拍照</button>
   </div>
 
   <script>
@@ -93,38 +116,38 @@
         const resultImage = document.getElementById('result-image');
         const faceResult = document.getElementById('face-result');
         const videoContainer = document.getElementById('video-container');
+        const video = document.getElementById("preview");
         let mediaStream = null;
-  // 在DOM加载完成后自动执行
-window.addEventListener('DOMContentLoaded', async () => {
-    const video = document.getElementById('preview');
-    if (!video) return;
+window.addEventListener("DOMContentLoaded", initCamera);
 
+async function initCamera() {
+    if (!video) return;
     try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                facingMode: 'environment'
-            }
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" }
         });
-        
         video.srcObject = mediaStream;
-        video.onloadedmetadata = () => {
-            video.play();
-            document.getElementById('camera').style.display = 'block';
-            document.getElementById('capture').disabled = false;
+        video.onloadedmetadata = async () => {
+            await video.play();
+            document.getElementById("camera").style.display = "block";
+            captureBtn.disabled = false;
         };
-
-        // 添加摄像头状态监听
-        mediaStream.getVideoTracks()[0].addEventListener('ended', () => {
-            showError('摄像头连接意外中断');
+        mediaStream.getVideoTracks()[0].addEventListener("ended", () => {
+            showError("摄像头连接意外中断");
         });
-
     } catch (err) {
-        showError('请允许摄像头访问权限');
-        console.error('摄像头初始化失败:', err);
+        showError("请允许摄像头访问权限");
+        console.error("摄像头初始化失败:", err);
     }
-});
+}
+
+function stopCamera() {
+    if (mediaStream) {
+        mediaStream.getTracks()[0].stop();
+        mediaStream = null;
+    }
+}
+
 
 function showError(message) {
     const errorDiv = document.createElement('div');
@@ -251,6 +274,13 @@ function showError(message) {
 
                 }
         });
+retakeBtn.addEventListener("click", () => {
+    faceResult.style.display = "none";
+    resultImage.style.display = "none";
+    captureBtn.style.display = "inline-block";
+    retakeBtn.style.display = "none";
+    initCamera();
+});
 
   </script>
 </body>
