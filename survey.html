@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>可选问卷</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    height: 100vh;
+    background: url('./images/background.jpeg') center/cover fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+  }
+  body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(6px) brightness(1.1);
+    background: rgba(255,255,255,0.6);
+    z-index: -1;
+  }
+  .form-container {
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    max-width: 500px;
+    width: 90%;
+  }
+  h2 { text-align: center; margin-bottom: 10px; }
+  .optional-note { text-align: center; font-size: 0.9rem; color: #666; margin-bottom: 15px; }
+  form { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  input { width: calc(50% - 10px); padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+  .buttons { text-align: center; margin-top: 20px; }
+  button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin: 0 10px; }
+  #save-btn { background: #4CAF50; color: white; }
+  #skip-btn { background: #999; color: white; }
+</style>
+</head>
+<body>
+<div class="form-container">
+  <h2>填写可选信息</h2>
+  <div class="optional-note">以下内容均为<span style="color:#d33;font-weight:bold;">选填</span>，可直接跳过</div>
+  <form id="optional-form">
+    <input id="height_cm" placeholder="身高(cm)">
+    <input id="weight_kg" placeholder="体重(kg)">
+    <input id="birthday" placeholder="生日 YYYY-MM-DD">
+    <input id="taste_preference" placeholder="口味偏好">
+    <input id="health_goal" placeholder="健康目标">
+    <input id="food_restrictions" placeholder="忌口">
+    <input id="self_reported_mood" placeholder="今日心情">
+    <input id="activity_level" placeholder="活动量">
+    <input id="blood_type" placeholder="血型">
+    <input id="recent_focus" placeholder="近期关注">
+    <input id="enhance_or_dissolve" placeholder="想提升/化解">
+  </form>
+  <div class="buttons">
+    <button id="save-btn">保存信息并进入推荐</button>
+    <button id="skip-btn">直接进入推荐</button>
+  </div>
+</div>
+<script>
+  function collectInfo() {
+    const ids = ['height_cm','weight_kg','birthday','taste_preference','health_goal','food_restrictions','self_reported_mood','activity_level','blood_type','recent_focus','enhance_or_dissolve'];
+    const info = {};
+    ids.forEach(id => { info[id] = document.getElementById(id).value || ''; });
+    return info;
+  }
+  document.getElementById('save-btn').addEventListener('click', () => {
+    localStorage.setItem('userInfo', JSON.stringify(collectInfo()));
+    window.location.href = 'dishespage.html';
+  });
+  document.getElementById('skip-btn').addEventListener('click', () => {
+    localStorage.removeItem('userInfo');
+    window.location.href = 'dishespage.html';
+  });
+</script>
+</body>
+</html>

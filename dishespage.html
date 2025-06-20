@@ -81,6 +81,26 @@
       background-position: center;
       position: relative;
     }
+    .survey-wrapper {
+      color: white;
+      background: rgba(0,0,0,0.3);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .survey-wrapper input {
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .optional-note {
+      text-align: center;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
     <style>
       .camera-error {
         padding: 20px;
@@ -101,12 +121,29 @@
 <body>
   <div class="content">
     <h1>菜品推荐</h1>
+    <div class="survey-wrapper">
+      <div class="optional-note">以下信息均为<span style="color:#ffd">选填</span></div>
+      <form id="survey-form" style="margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
+      <input id="height_cm" placeholder="身高(cm)" style="width:120px;">
+      <input id="weight_kg" placeholder="体重(kg)" style="width:120px;">
+      <input id="birthday" placeholder="生日 YYYY-MM-DD" style="width:160px;">
+      <input id="taste_preference" placeholder="口味偏好" style="width:160px;">
+      <input id="health_goal" placeholder="健康目标" style="width:160px;">
+      <input id="food_restrictions" placeholder="忌口" style="width:160px;">
+      <input id="self_reported_mood" placeholder="今日心情" style="width:160px;">
+      <input id="activity_level" placeholder="活动量" style="width:120px;">
+      <input id="blood_type" placeholder="血型" style="width:120px;">
+      <input id="recent_focus" placeholder="近期关注" style="width:160px;">
+      <input id="enhance_or_dissolve" placeholder="想提升/化解" style="width:160px;">
+      </form>
+    </div>
     <div id="camera">
       <video id="preview" autoplay muted playsinline></video>
     </div>
     <button id="capture-btn">📷点击拍照</button>
     <img id="result-image">
     <div id="face-result"></div>
+    <pre id="recommendation-output" style="display:none;color:white;white-space:pre-wrap;margin-top:1rem;"></pre>
     <button id="retake-btn">重新拍照</button>
   </div>
 
@@ -115,10 +152,11 @@
         const retakeBtn = document.getElementById('retake-btn');
         const resultImage = document.getElementById('result-image');
         const faceResult = document.getElementById('face-result');
+        const recommendationOutput = document.getElementById('recommendation-output');
         const videoContainer = document.getElementById('video-container');
         const video = document.getElementById("preview");
         let mediaStream = null;
-window.addEventListener("DOMContentLoaded", initCamera);
+window.addEventListener("DOMContentLoaded", () => { loadUserInfo(); initCamera(); });
 
 async function initCamera() {
     if (!video) return;
@@ -160,7 +198,7 @@ function showError(message) {
     document.querySelector('.content').prepend(errorDiv);
 }
      // 调用Face++人脸检测API
-     async function detectFaces(imageBlob) {
+        async function detectFaces(imageBlob) {
             const formData = new FormData();
             formData.append('api_key', 'mSptsjK7hxWAuKyOGmTjQAhYwJ2MaCJJ'); 
             formData.append('api_secret', 'vcBaU1AknR9S_NgPnc8oZGrEn-H-_NOk');
@@ -179,6 +217,259 @@ function showError(message) {
                 console.error('API调用失败:', error);
                 return null;
             }
+        }
+
+        function loadUserInfo() {
+            const data = localStorage.getItem('userInfo');
+            if (!data) return;
+            try {
+                const info = JSON.parse(data);
+                Object.keys(info).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) el.value = info[key];
+                });
+            } catch (e) {
+                console.error('加载用户信息失败', e);
+            }
+        }
+
+        function getUserInfo() {
+            return {
+                height_cm: document.getElementById('height_cm').value || '',
+                weight_kg: document.getElementById('weight_kg').value || '',
+                birthday: document.getElementById('birthday').value || '',
+                taste_preference: document.getElementById('taste_preference').value || '',
+                health_goal: document.getElementById('health_goal').value || '',
+                food_restrictions: document.getElementById('food_restrictions').value || '',
+                self_reported_mood: document.getElementById('self_reported_mood').value || '',
+                activity_level: document.getElementById('activity_level').value || '',
+                blood_type: document.getElementById('blood_type').value || '',
+                recent_focus: document.getElementById('recent_focus').value || '',
+                enhance_or_dissolve: document.getElementById('enhance_or_dissolve').value || ''
+            };
+        }
+
+        const PROMPT_TEMPLATE = `你是「AI面相玄学营养推荐师」，融合面部识别结果、用户填写问卷信息、现代营养科学与东方玄学，为C端用户生成趣味、精准、个性化的午餐推荐建议。
+
+你的任务：
+- 输入数据：面部识别数据（必填）+ 用户问卷信息（选填）
+- 输出严格结构化的JSON格式，供前端系统解析展示；
+- 内容逻辑结合面部图像分析与用户个性化填写信息；
+- 保持创造性表达，避免模板重复，确保每日输出有新鲜感、社交传播性和娱乐体验。
+---
+
+【输入数据】
+
+### 必填输入（面部识别接口提供，始终存在）
+
+json
+[FACE_INPUT]
+
+选填输入（用户问卷信息，部分或全部可能缺省）
+[USER_INPUT]
+
+你需要结合必填的面部识别结果，与选填的用户信息问卷，整合生成饮食推荐结果。选填问卷信息如果缺失，可仅基于面部识别数据独立完成生成；原则如下：
+
+填写的信息越多，内容应体现越丰富个性化；
+
+逻辑丰富，但输出需灵活多样，不得固定模板死板输出；
+
+保留充分创造空间，体现AI的创造力与娱乐性。
+
+一、各字段生成说明
+1. metaphysics（玄学信息）
+lucky_color：综合面部状态、情绪表现、近期关注方向、血型等自由发挥，参考五行色系（金白银、木青绿、水黑蓝、火红橙紫、土黄棕）。
+
+lucky_number：结合年龄、情绪、健康目标、玄学诉求等生成有积极寓意的幸运数字（1-9）。
+
+guardian_star：结合生日、血型、玄学诉求，自由设定东方玄学或趣味守护星（如：紫微、文昌、天喜、福德、招财猫等）。
+
+five_elements_food：生成今日宜食五行搭配描述（如：水木双修 清火养颜）。
+
+today_yi / today_ji：饮食与情绪上的宜忌提示，语言可幽默轻松。
+
+2. face_summary（面相玄学解读）
+融合面部皮肤指标、微笑度、气场生成趣味面相解读语。
+
+3. mood_summary（心情解读）
+综合面部情绪与自填今日心情自由生成，语言亲切轻松。
+
+4. recommendations（菜品推荐）
+每次输出 4 道菜品，每道菜品包含：
+
+dish：具体菜品名称；
+
+fun_comment：轻松幽默俏皮的趣味文案，可押韵可加emoji；
+
+metaphysics_reason：玄学背书逻辑；
+
+nutrition_value：通俗营养亮点；
+
+seasonal_reason：节气或时令合理性。
+
+菜品逻辑分布：
+
+第一菜：幸运色呼应食材；
+
+第二菜：面部皮肤调理食材；
+
+第三菜：健康目标&情绪疗愈食材；
+
+第四菜：节气时令食材。
+
+需注意：
+
+食材需符合用户忌口限制；
+
+充分体现健康目标（如减脂→控油高蛋白，增肌→补蛋白，护胃→软烂清淡）；
+
+结合活动量与当前能量代谢需求匹配推荐。
+
+5. personalized_insight（个人专属锦囊）
+health_tip：个性化健康建议；
+
+energy_tip：气场能量提醒；
+
+fortune_tip：运势玄学锦囊。
+
+6️. closing_quote（结尾祝福）
+一句适合社交分享的轻松结语。
+
+【特别提醒】
+
+除 JSON 结构之外严禁输出任何多余文字；
+
+保证输出内容每日有新鲜感，避免模板套路式结果；
+
+风格整体保持年轻化、趣味玄学、正能量、社交传播感极强。
+
+【输出格式要求】
+
+请严格按照如下结构化JSON格式输出，字段顺序、层级、命名必须一致。除JSON之外不得输出任何其他文字。
+
+{
+  "metaphysics": {
+    "lucky_color": "",
+    "lucky_number": "",
+    "guardian_star": "",
+    "five_elements_food": "",
+    "today_yi": "",
+    "today_ji": ""
+  },
+  "face_summary": "",
+  "mood_summary": "",
+  "recommendations": [
+    {
+      "dish": "",
+      "fun_comment": "",
+      "metaphysics_reason": "",
+      "nutrition_value": "",
+      "seasonal_reason": ""
+    },
+    {
+      "dish": "",
+      "fun_comment": "",
+      "metaphysics_reason": "",
+      "nutrition_value": "",
+      "seasonal_reason": ""
+    },
+    {
+      "dish": "",
+      "fun_comment": "",
+      "metaphysics_reason": "",
+      "nutrition_value": "",
+      "seasonal_reason": ""
+    },
+    {
+      "dish": "",
+      "fun_comment": "",
+      "metaphysics_reason": "",
+      "nutrition_value": "",
+      "seasonal_reason": ""
+    }
+  ],
+  "personalized_insight": {
+    "health_tip": "",
+    "energy_tip": "",
+    "fortune_tip": ""
+  },
+  "closing_quote": "",
+  "disclaimer": "AI食疗建议，仅供娱乐参考"
+}`;
+
+        function buildPrompt(face, user) {
+            return PROMPT_TEMPLATE
+                .replace('[FACE_INPUT]', JSON.stringify(face, null, 2))
+                .replace('[USER_INPUT]', JSON.stringify(user, null, 2));
+        }
+
+        async function callGPT(prompt) {
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer YOUR_OPENAI_API_KEY'
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.7
+                    })
+                });
+                const data = await response.json();
+                return data.choices && data.choices[0].message.content;
+            } catch (e) {
+                console.error('GPT调用失败', e);
+                return null;
+            }
+        }
+
+        function displayRecommendations(text) {
+            if (!text) return;
+            recommendationOutput.style.display = 'block';
+            try {
+                const obj = JSON.parse(text);
+                recommendationOutput.textContent = JSON.stringify(obj, null, 2);
+            } catch (e) {
+                recommendationOutput.textContent = text;
+            }
+        }
+
+       async function processFaceData(data) {
+            if (!data || !data.faces || !data.faces.length) {
+                faceResult.style.display = 'block';
+                faceResult.textContent = '未检测到人脸';
+                return;
+            }
+            faceResult.style.display = 'none';
+
+            const attr = data.faces[0].attributes || {};
+            const faceInfo = {
+                gender: attr.gender ? attr.gender.value : '',
+                age: attr.age ? attr.age.value : '',
+                smile_score: attr.smile ? attr.smile.value : '',
+                emotions: {
+                    happy: attr.emotion ? attr.emotion.happiness : '',
+                    calm: attr.emotion ? attr.emotion.neutral : '',
+                    sad: attr.emotion ? attr.emotion.sadness : '',
+                    surprise: attr.emotion ? attr.emotion.surprise : '',
+                    angry: attr.emotion ? attr.emotion.anger : '',
+                    disgust: attr.emotion ? attr.emotion.disgust : '',
+                    fear: attr.emotion ? attr.emotion.fear : ''
+                },
+                skin: {
+                    health: attr.skinstatus ? attr.skinstatus.health : '',
+                    spots: attr.skinstatus ? attr.skinstatus.stain : '',
+                    dark_circles: attr.skinstatus ? attr.skinstatus.dark_circle : '',
+                    acne: attr.skinstatus ? attr.skinstatus.acne : ''
+                }
+            };
+
+            const userInfo = getUserInfo();
+            const prompt = buildPrompt(faceInfo, userInfo);
+            const resultText = await callGPT(prompt);
+            displayRecommendations(resultText);
         }
     // 拍照功能
     // 渲染检测结果（重点修改部分）
@@ -268,9 +559,9 @@ function showError(message) {
                 captureBtn.style.display = 'none';
                 retakeBtn.style.display = 'inline-block';
 
-                // 调用API并渲染结果
+                // 调用API并获取推荐
                 const detectData = await detectFaces(imageBlob);
-                if (detectData) renderResults(detectData);
+                if (detectData) await processFaceData(detectData);
 
                 }
         });
@@ -279,6 +570,7 @@ retakeBtn.addEventListener("click", () => {
     resultImage.style.display = "none";
     captureBtn.style.display = "inline-block";
     retakeBtn.style.display = "none";
+    recommendationOutput.style.display = "none";
     initCamera();
 });
 
