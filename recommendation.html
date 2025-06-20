@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>菜品推荐流程</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, 'Microsoft YaHei', sans-serif;
+    min-height: 100vh;
+    background: url('./images/dishes-2.jpeg') center/cover fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    filter: blur(8px) brightness(1.1);
+    z-index: -1;
+  }
+  .page { display:none; text-align:center; }
+  .page.active { display:block; }
+  .camera-area {
+    width:300px; height:300px;
+    background:white; border-radius:20px;
+    margin:1rem auto; position:relative;
+    overflow:hidden;
+  }
+  #video, #capture-canvas { width:100%; height:100%; object-fit:cover; }
+  #result-photo { width:300px; height:300px; border-radius:20px; object-fit:cover; }
+  #analyzing {
+    position:absolute; bottom:10px; left:0; right:0;
+    color:#fff; background:rgba(0,0,0,0.5);
+  }
+  .result-container { display:flex; justify-content:center; align-items:center; gap:20px; flex-wrap:wrap; }
+  .info-panel { width:300px; background:rgba(255,255,255,0.8); padding:1rem; border-radius:10px; text-align:left; }
+  .attr-table { width:100%; border-collapse:collapse; }
+  .attr-table td { padding:4px; border-bottom:1px solid #ccc; }
+  .chart { margin-top:1rem; }
+  .bar-row { display:flex; align-items:center; margin-bottom:6px; font-size:0.9rem; }
+  .bar-label { width:60px; }
+  .bar-container { flex:1; background:#eee; height:8px; border-radius:4px; margin:0 5px; }
+  .bar { height:100%; background:#4CAF50; border-radius:4px; }
+  .bar-value { width:30px; text-align:right; font-size:0.8rem; }
+  button { padding:10px 20px; border:none; border-radius:4px; background:#4CAF50; color:#fff; cursor:pointer; }
+  pre { white-space:pre-wrap; text-align:left; background:rgba(255,255,255,0.8); padding:1rem; border-radius:8px; }
+</style>
+</head>
+<body>
+<div id="step1" class="page active">
+  <h1>菜品推荐</h1>
+  <div class="camera-area">
+    <video id="video" autoplay muted playsinline style="display:none;"></video>
+    <canvas id="capture-canvas" width="300" height="300" style="display:none;"></canvas>
+    <div id="analyzing" style="display:none;">分析中...</div>
+  </div>
+  <button id="start-btn">点击拍照</button>
+  <button id="capture-btn" style="display:none;">拍照</button>
+</div>
+<div id="step2" class="page">
+  <h2>面部分析结果</h2>
+  <div class="result-container">
+    <img id="result-photo" />
+    <div id="analysis-results" class="info-panel"></div>
+  </div>
+  <button id="to-fortune-btn">下一步</button>
+</div>
+<div id="step3" class="page">
+  <h2>今日玄学分析</h2>
+  <div id="fortune-results" class="info-panel" style="margin:auto;"></div>
+  <button id="to-final-btn">获取食疗推荐</button>
+</div>
+<div id="step4" class="page">
+  <h2>食疗建议</h2>
+  <pre id="final-recommendation"></pre>
+</div>
+<script>
+let mediaStream = null;
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
+const step4 = document.getElementById('step4');
+const startBtn = document.getElementById('start-btn');
+const captureBtn = document.getElementById('capture-btn');
+const toFortuneBtn = document.getElementById('to-fortune-btn');
+const toFinalBtn = document.getElementById('to-final-btn');
+const video = document.getElementById('video');
+const canvas = document.getElementById('capture-canvas');
+const analyzing = document.getElementById('analyzing');
+const resultPhoto = document.getElementById('result-photo');
+const analysisResults = document.getElementById('analysis-results');
+const fortuneResults = document.getElementById('fortune-results');
+const finalRec = document.getElementById('final-recommendation');
+
+function show(step){
+  [step1,step2,step3,step4].forEach(p=>p.classList.remove('active'));
+  step.classList.add('active');
+}
+
+async function initCamera(){
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+    video.srcObject = mediaStream;
+    await video.play();
+    video.style.display = 'block';
+  }catch(e){
+    alert('无法访问摄像头');
+  }
+}
+
+function stopCamera(){
+  if(mediaStream){
+    mediaStream.getTracks().forEach(t=>t.stop());
+    mediaStream = null;
+  }
+}
+
+startBtn.onclick = async () => {
+  await initCamera();
+  startBtn.style.display = 'none';
+  captureBtn.style.display = 'inline-block';
+};
+
+captureBtn.onclick = async () => {
+  analyzing.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video,0,0,300,300);
+  const dataUrl = canvas.toDataURL('image/jpeg');
+  stopCamera();
+  video.style.display = 'none';
+  analyzing.style.display = 'none';
+  resultPhoto.src = dataUrl;
+  const blob = await (await fetch(dataUrl)).blob();
+  const detect = await detectFaces(blob);
+  renderFace(detect);
+  show(step2);
+};
+
+toFortuneBtn.onclick = async () => {
+  const userInfo = {};
+  const face = latestFaceInfo;
+  const prompt = buildPrompt(face,userInfo);
+  const text = await callGPT(prompt);
+  if(text){
+    try{
+      const obj = JSON.parse(text);
+      fortuneResults.textContent = JSON.stringify(obj.metaphysics, null, 2);
+      finalRec.textContent = JSON.stringify(obj, null, 2);
+    }catch(e){
+      fortuneResults.textContent = text;
+      finalRec.textContent = text;
+    }
+  }
+  show(step3);
+};
+
+toFinalBtn.onclick = () => {
+  show(step4);
+};
+
+let latestFaceInfo = null;
+
+async function detectFaces(imageBlob){
+  const formData = new FormData();
+  formData.append('api_key','mSptsjK7hxWAuKyOGmTjQAhYwJ2MaCJJ');
+  formData.append('api_secret','vcBaU1AknR9S_NgPnc8oZGrEn-H-_NOk');
+  formData.append('image_file',imageBlob,'photo.jpg');
+  formData.append('return_attributes','gender,age,smiling,emotion,skinstatus');
+  const resp = await fetch('https://api-cn.faceplusplus.com/facepp/v3/detect',{method:'POST',body:formData});
+  const data = await resp.json();
+  if(data.faces && data.faces.length){
+    const attr = data.faces[0].attributes;
+    latestFaceInfo = {
+      gender: attr.gender.value,
+      age: attr.age.value,
+      smile: attr.smile.value,
+      emotion: attr.emotion,
+      skin: attr.skinstatus
+    };
+  }
+  return data;
+}
+
+const EMOTION_MAP = {anger:'愤怒', disgust:'厌恶', fear:'恐惧', happiness:'高兴', neutral:'平静', sadness:'伤心', surprise:'惊讶'};
+const SKIN_MAP = {health:'健康指数', stain:'色斑值', dark_circle:'黑眼圈值', acne:'青春痘值'};
+
+function barRows(obj, map={}){
+  let rows = '';
+  for(const k in obj){
+    const v = obj[k];
+    const label = map[k] || k;
+    rows += `<div class="bar-row"><span class="bar-label">${label}</span><div class="bar-container"><div class="bar" style="width:${v}%"></div></div><span class="bar-value">${v.toFixed(1)}</span></div>`;
+  }
+  return rows;
+}
+
+function renderFace(data){
+  if(!data || !data.faces || !data.faces.length){
+    analysisResults.textContent = '未检测到人脸';
+    return;
+  }
+  const attr = data.faces[0].attributes;
+  let html = '<table class="attr-table">';
+  html += `<tr><td>性别</td><td>${attr.gender.value}</td></tr>`;
+  html += `<tr><td>年龄</td><td>${attr.age.value}</td></tr>`;
+  html += `<tr><td>微笑度</td><td>${attr.smile.value.toFixed(2)}%</td></tr>`;
+  html += '</table>';
+  if(attr.emotion){
+    html += `<div class="chart"><h3>情绪分布</h3>${barRows(attr.emotion, EMOTION_MAP)}</div>`;
+  }
+  if(attr.skinstatus){
+    html += `<div class="chart"><h3>皮肤状态</h3>${barRows(attr.skinstatus, SKIN_MAP)}</div>`;
+  }
+  analysisResults.innerHTML = html;
+}
+
+const PROMPT_TEMPLATE = `你是「AI面相玄学营养推荐师」，根据用户面部信息生成食疗推荐。\n[FACE]\n`;
+function buildPrompt(face,user){
+  return PROMPT_TEMPLATE.replace('[FACE]',JSON.stringify(face));
+}
+const DASHSCOPE_API_KEY = 'YOUR_DASHSCOPE_API_KEY';
+async function callGPT(prompt){
+  const resp = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer ' + DASHSCOPE_API_KEY
+    },
+    body:JSON.stringify({
+      model:'deepseek-r1',
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  const data = await resp.json();
+  return data.choices && data.choices[0].message.content;
+}
+</script>
+</body>
+</html>
