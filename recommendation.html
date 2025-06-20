@@ -176,7 +176,11 @@ dots.forEach((dot,idx)=>dot.addEventListener('click',()=>showSlide(idx)));
 
 captureBtn.onclick = async () => {
   if(!mediaStream) await initCamera();
-  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  if(video.readyState < 2){
+    await new Promise(r => video.onloadedmetadata = () => r());
+  }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video,0,0,canvas.width,canvas.height);
   photoData = canvas.toDataURL('image/jpeg');
@@ -413,6 +417,10 @@ async function callGPT(prompt){
   const data = await resp.json();
   return data.choices && data.choices[0].message.content;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  initCamera();
+});
 </script>
 </body>
 </html>
